@@ -3,6 +3,7 @@ from flask import render_template, redirect, url_for, request
 from app import app, db, sp_oauth
 from app.forms import CodeInputForm, SongEntryForm
 import spotipy
+from spotipy.client import SpotifyException
 import random
 import time
 import string
@@ -99,7 +100,12 @@ def queue(code):
         results = sp.search(song + ' ' + artist)
         if results.get('tracks', None).get('items', None):
             song_uri = results['tracks']['items'][0]['uri']
-            sp.add_to_queue(song_uri)
+
+            try:
+                sp.add_to_queue(song_uri)
+            except SpotifyException:
+                return render_template('queue.html', form=form, msg='Party owner must be playing music before queueing')
+
             return render_template('queue.html', form=form, msg='Song added to queue')
         else:
             return render_template('queue.html', form=form, msg='Song not found')
