@@ -1,1 +1,1 @@
-web: flask db upgrade; flask run; gunicorn collaborativeQueue:app;
+web: flask db upgrade; gunicorn collaborativeQueue:app;
