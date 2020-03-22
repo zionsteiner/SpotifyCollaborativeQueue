@@ -36,21 +36,20 @@ def login():
             sp = spotipy.Spotify(access_token)
             user_id = sp.current_user()['id']
 
-            # Generate random access code
-            chars = set(string.ascii_letters) | set(string.digits)
-            access_code = ''.join([random.choice(list(chars)) for _ in range(10)])
-
             # Update existing cred entry if one exists
             existing_cred = SpotifyCredentials.query.filter_by(user_id=user_id).first()
             if existing_cred:
                 existing_cred.access_token = token_info['access_token']
                 existing_cred.expires_at = token_info['expires_in'] + time.time()
                 existing_cred.refresh_token = token_info['refresh_token']
-                existing_cred.code = access_code
 
                 db.session.commit()
             # Add new cred entry
             else:
+                # Generate random access code
+                chars = set(string.ascii_letters) | set(string.digits)
+                access_code = ''.join([random.choice(list(chars)) for _ in range(10)])
+
                 cred = SpotifyCredentials(user_id=user_id,
                                           access_token=access_token,
                                           expires_at=expires_at,
@@ -65,6 +64,7 @@ def login():
             return redirect(auth_url)
 
 
+# ToDo: add option to edit access code
 @app.route('/view_code')
 def view_code():
     code = request.args['code']
@@ -94,7 +94,7 @@ def queue(code):
 
         sp = spotipy.Spotify(cred.access_token)
         results = sp.search(song + ' ' + artist)
-        if results:
+        if results.get('tracks', None).get('items', None):
             song_uri = results['tracks']['items'][0]['uri']
             sp.add_to_queue(song_uri)
             return render_template('queue.html', form=form, msg='Song added to queue')
