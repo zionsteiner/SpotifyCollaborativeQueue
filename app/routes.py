@@ -36,6 +36,10 @@ def login():
             sp = spotipy.Spotify(access_token)
             user_id = sp.current_user()['id']
 
+            # Generate random access code
+            chars = set(string.ascii_letters) | set(string.digits)
+            access_code = ''.join([random.choice(list(chars)) for _ in range(10)])
+
             # Update existing cred entry if one exists
             existing_cred = SpotifyCredentials.query.filter_by(user_id=user_id).first()
             if existing_cred:
@@ -46,10 +50,6 @@ def login():
                 db.session.commit()
             # Add new cred entry
             else:
-                # Generate random access code
-                chars = set(string.ascii_letters) | set(string.digits)
-                access_code = ''.join([random.choice(list(chars)) for _ in range(10)])
-
                 cred = SpotifyCredentials(user_id=user_id,
                                           access_token=access_token,
                                           expires_at=expires_at,
